@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Dog Surveillance Dashboard</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f0f4f8;
+      color: #333;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      background-color: #3D5A80;
+      color: #fff;
+      padding: 20px;
+      width: 100%;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 2rem;
+    }
+
+    h1#title-with-clock {
+      font-size: 2rem;
+      font-weight: normal;
+      margin: 0;
+    }
+
+
+    #clock {
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+
+    .container {
+      margin: 30px auto;
+      max-width: 700px;
+      width: 90%;
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+    }
+
+    img {
+      display: block;
+      margin: 0 auto;
+      border-radius: 10px;
+      max-width: 100%;
+    }
+
+    h2 {
+      margin-top: 30px;
+      color: #3D5A80;
+    }
+
+    button {
+      background-color: #EE6C4D;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background 0.3s;
+    }
+
+    .button-group {
+      text-align: center;
+    }
+
+    button:disabled {
+      background-color: #bbb;
+      cursor: not-allowed;
+    }
+
+    button:hover:enabled {
+      background-color: #d85a3c;
+    }
+
+    #status,
+    #notification-box {
+      margin-top: 15px;
+      padding: 10px;
+      background-color: #E0FBFC;
+      border-left: 5px solid #3D5A80;
+      border-radius: 5px;
+      font-weight: bold;
+    }
+
+    footer {
+      margin-top: 50px;
+      padding: 10px;
+      font-size: 0.9rem;
+      color: #888;
+    }
+
+    #photo-gallery {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .photo-card {
+      margin: 10px;
+      text-align: center;
+    }
+
+    .photo-card img {
+      width: 200px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .photo-card span {
+      display: block;
+      margin-top: 5px;
+      font-size: 0.85rem;
+      color: #444;
+    }
+
+    .carousel-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      max-width: 90vw;
+      overflow: hidden;
+      margin-top: 20px;
+      position: relative;
+    }
+
+    .carousel-track {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+      padding: 10px;
+    }
+
+    .carousel-track::-webkit-scrollbar {
+      display: none;
+    }
+
+    .carousel-track img {
+      height: 120px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .carousel-track img:hover {
+      transform: scale(1.05);
+    }
+
+    .carousel-btn {
+      background: #3D5A80;
+      color: white;
+      border: none;
+      font-size: 2rem;
+      padding: 0 10px;
+      cursor: pointer;
+      height: 100%;
+    }
+
+    #lightbox {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      justify-content: center;
+      align-items: center;
+    }
+
+    #lightbox img {
+      max-width: 90%;
+      max-height: 90%;
+      border-radius: 10px;
+      box-shadow: 0 0 20px #000;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1 id="title-with-clock">
+      Dog Surveillance Dashboard - <span id="clock">--:--:--</span>
+    </h1>
+  </header>
+
+  </header>
+
+  <div class="container">
+    <img src="/video_feed" width="640" height="480" alt="Live Dog Stream" />
+
+    <h2>Dispense Options</h2>
+    <div class="button-group">
+      <button onclick="sendCommand('feed')" id="feedButton">Feed</button>
+      <button onclick="sendCommand('treat')" id="treatButton">Treat</button>
+    </div>
+    <div id="status">Status: <span id="msg">Waiting...</span></div>
+
+    <h2>Motion Notification</h2>
+    <div id="notification-box">Waiting for motion...</div>
+
+    <h2>Motion-Triggered Photos</h2>
+    <div class="carousel-wrapper">
+      <button class="carousel-btn" onclick="scrollCarousel(-1)">❮</button>
+      <div id="carousel" class="carousel-track"></div>
+      <button class="carousel-btn" onclick="scrollCarousel(1)">❯</button>
+    </div>
+  </div>
+
+
+  <div id="lightbox" onclick="closeLightbox()">
+    <img id="lightbox-img" src="" alt="Full size image">
+  </div>
+
+  <footer>
+    &copy; 2025 DogCam | Tail-wagging tech powered by Raspberry Pi & Arduino
+  </footer>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-messaging-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDiUWyDMdm3gadvem5aREqhQGYJ4DjCI-o",
+      authDomain: "dogsurveillance-a57aa.firebaseapp.com",
+      projectId: "dogsurveillance-a57aa",
+      storageBucket: "dogsurveillance-a57aa.firebasestorage.app",
+      messagingSenderId: "155854737549",
+      appId: "1:155854737549:web:f1eeb5c392fb6ebd1892c4",
+      measurementId: "G-L0P0L58TB6"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const messaging = firebase.messaging();
+
+    Notification.requestPermission().then((permission) => {
+      if (permission === "granted") {
+        messaging.getToken({ vapidKey: "YOUR_PUBLIC_VAPID_KEY" })
+          .then((token) => {
+            if (token) {
+              console.log("FCM Token:", token);
+              alert("FCM Token (copy this into DogCam.py):\n\n" + token);
+            } else {
+              console.warn("No registration token available.");
+            }
+          })
+          .catch((err) => {
+            console.error("Error retrieving token: ", err);
+          });
+      } else {
+        console.warn("Notifications not granted.");
+      }
+    });
+
+    function sendCommand(type) {
+      const msg = document.getElementById("msg");
+      msg.innerText = "Sending " + type + " command...";
+      fetch("/" + type)
+        .then(res => res.text())
+        .then(response => {
+          msg.innerText = response;
+        })
+        .catch(() => {
+          msg.innerText = "Failed to send " + type + " command.";
+        });
+    }
+
+    function checkNotification() {
+      fetch("/notification")
+        .then(res => res.json())
+        .then(data => {
+          const box = document.getElementById("notification-box");
+          if (box.innerText !== data.message) {
+            box.innerText = data.message;
+            if (data.message.includes("Motion")) {
+              const audio = new Audio('/alert.mp3');
+              audio.play();
+              alert("Motion detected! Your dog is active.");
+            }
+          }
+        })
+        .catch(() => {
+          document.getElementById("notification-box").innerText = "Unable to get status.";
+        });
+    }
+
+    let imageLinks = [];
+    let autoScrollInterval = null;
+
+    function loadGallery() {
+      fetch("/public/photos/")
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, "text/html");
+          imageLinks = Array.from(doc.querySelectorAll("a"))
+            .filter(link => /\.(jpe?g)$/i.test(link.href))
+            .map(link => link.href)
+            .reverse();
+
+          const carousel = document.getElementById("carousel");
+          carousel.innerHTML = "";
+
+          if (imageLinks.length === 0) {
+            const img = document.createElement("img");
+            img.src = "/no-photos.jpg";
+            img.alt = "No motion photos yet.";
+            carousel.appendChild(img);
+            return;
+          }
+
+          imageLinks.forEach((url, index) => {
+            const img = document.createElement("img");
+            img.src = url;
+            img.onclick = () => openLightbox(url);
+            carousel.appendChild(img);
+          });
+
+          startAutoScroll();
+        });
+    }
+
+
+    function openLightbox(url) {
+      const modal = document.getElementById("lightbox");
+      const img = document.getElementById("lightbox-img");
+      img.src = url;
+      modal.style.display = "flex";
+    }
+
+    function closeLightbox() {
+      document.getElementById("lightbox").style.display = "none";
+    }
+
+
+    function updateClock() {
+      const now = new Date();
+      const timeString = now.toLocaleTimeString();
+      document.getElementById("clock").innerText = timeString;
+    }
+
+    setInterval(checkNotification, 3000);
+    setInterval(loadGallery, 60000);
+    setInterval(updateClock, 1000);
+    updateClock();
+    loadGallery();
+
+    function scrollCarousel(direction) {
+      const carousel = document.getElementById("carousel");
+      carousel.scrollBy({ left: direction * 150, behavior: 'smooth' });
+    }
+
+    function openLightbox(url) {
+      const modal = document.getElementById("lightbox");
+      const img = document.getElementById("lightbox-img");
+      img.src = url;
+      modal.style.display = "flex";
+    }
+
+    function closeLightbox() {
+      document.getElementById("lightbox").style.display = "none";
+    }
+
+    function startAutoScroll() {
+      if (autoScrollInterval) clearInterval(autoScrollInterval);
+
+      autoScrollInterval = setInterval(() => {
+        scrollCarousel(1);
+      }, 5000); 
+    }
+
+  </script>
+</body>
+
+</html>
